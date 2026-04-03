@@ -3,11 +3,14 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-// Per-parameter routes
+// Routes
+const authRoutes = require("./routes/authRoutes");
+const sensorRoutes = require("./routes/sensorRoutes");
 const temperatureRoutes = require("./routes/temperatureRoutes");
 const humidityRoutes = require("./routes/humidityRoutes");
 const soilMoistureRoutes = require("./routes/soilMoistureRoutes");
 const waterLevelRoutes = require("./routes/waterLevelRoutes");
+const relayRoutes = require("./routes/relayRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -22,11 +25,16 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Routes — one mount per parameter
+// Public routes (no auth)
+app.use("/api/auth", authRoutes);
+
+// Protected routes (require x-api-key)
+app.use("/api/sensors", sensorRoutes);
 app.use("/api/temperature", temperatureRoutes);
 app.use("/api/humidity", humidityRoutes);
 app.use("/api/soil-moisture", soilMoistureRoutes);
 app.use("/api/water-level", waterLevelRoutes);
+app.use("/api/relay", relayRoutes);
 
 // Health / readiness probes (OKD / Kubernetes)
 app.get("/health", (req, res) => {
@@ -43,27 +51,47 @@ app.get("/ready", async (req, res) => {
 app.get("/", (req, res) => {
   res.json({
     service: "wifi-nodes-backend",
-    version: "1.0.0",
+    version: "2.0.0",
+    multiTenant: true,
+    auth: "x-api-key header required on all /api/* routes (except /api/auth)",
     endpoints: [
-      "POST   /api/temperature",
-      "GET    /api/temperature/latest",
-      "GET    /api/temperature/history",
-      "POST   /api/humidity",
-      "GET    /api/humidity/latest",
-      "GET    /api/humidity/history",
-      "POST   /api/soil-moisture",
-      "GET    /api/soil-moisture/latest",
-      "GET    /api/soil-moisture/history",
-      "POST   /api/water-level",
-      "GET    /api/water-level/latest",
-      "GET    /api/water-level/history",
-      "GET    /health",
-      "GET    /ready",
+      "POST   /api/auth/register        — Create user account (returns API key)",
+      "POST   /api/auth/login            — Login (returns API key)",
+      "POST   /api/auth/regenerate-key   — Regenerate API key",
+      "",
+      "POST   /api/sensors/register      — Register sensor (MAC-based ID)",
+      "GET    /api/sensors               — List your sensors",
+      "DELETE /api/sensors/:sensorId     — Remove a sensor",
+      "",
+      "POST   /api/temperature           — Submit temperature reading",
+      "GET    /api/temperature/latest     — Get latest temperature",
+      "GET    /api/temperature/history    — Get temperature history",
+      "",
+      "POST   /api/humidity              — Submit humidity reading",
+      "GET    /api/humidity/latest        — Get latest humidity",
+      "GET    /api/humidity/history       — Get humidity history",
+      "",
+      "POST   /api/soil-moisture         — Submit soil moisture reading",
+      "GET    /api/soil-moisture/latest   — Get latest soil moisture",
+      "GET    /api/soil-moisture/history  — Get soil moisture history",
+      "",
+      "POST   /api/water-level           — Submit water level reading",
+      "GET    /api/water-level/latest     — Get latest water level",
+      "GET    /api/water-level/history    — Get water level history",
+      "",
+      "POST   /api/relay/command         — Send relay command",
+      "GET    /api/relay/pending          — ESP32 polls for commands",
+      "POST   /api/relay/status          — ESP32 reports relay state",
+      "GET    /api/relay/status           — Get relay status",
+      "",
+      "GET    /health                     — Liveness probe",
+      "GET    /ready                      — Readiness probe",
     ],
   });
 });
 
 // Start Server
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Wi-Fi Node Backend running on port ${PORT}`);
+  console.log(`🚀 Wi-Fi Node Backend v2.0 running on port ${PORT}`);
+  console.log(`🔐 Multi-tenant mode enabled`);
 });
