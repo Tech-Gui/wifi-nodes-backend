@@ -11,6 +11,8 @@ const humidityRoutes = require("./routes/humidityRoutes");
 const soilMoistureRoutes = require("./routes/soilMoistureRoutes");
 const waterLevelRoutes = require("./routes/waterLevelRoutes");
 const relayRoutes = require("./routes/relayRoutes");
+const sensorConfigRoutes = require("./routes/sensorConfigRoutes");
+
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -46,6 +48,8 @@ app.use("/api/auth", authRoutes);
 
 // Protected routes (require x-api-key)
 app.use("/api/sensors", sensorRoutes);
+app.use("/api/sensors", sensorConfigRoutes);
+
 app.use("/api/temperature", temperatureRoutes);
 app.use("/api/humidity", humidityRoutes);
 app.use("/api/soil-moisture", soilMoistureRoutes);
