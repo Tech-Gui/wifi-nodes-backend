@@ -6,6 +6,10 @@ const Sensor = require("../models/Sensor");
  *
  * Expects header:  x-api-key: mash_xxxxxxxx
  * Attaches req.user and optionally req.sensor
+ *
+ * Sensor ownership check is skipped on:
+ *   - POST /api/sensors/register (sensor doesn't exist yet)
+ *   - GET routes without a sensor_id filter (returns all user data)
  */
 const authenticate = async (req, res, next) => {
   try {
@@ -21,7 +25,13 @@ const authenticate = async (req, res, next) => {
 
     req.user = user;
 
-    // If a sensor_id is in body or query, verify it belongs to this user
+    // Skip sensor ownership check on sensor registration
+    const isSensorRegistration = req.path === "/register" && req.method === "POST" && req.baseUrl === "/api/sensors";
+    if (isSensorRegistration) {
+      return next();
+    }
+
+    // If a sensor_id / relay_id is provided, verify it belongs to this user
     const sensorId = req.body?.sensor_id || req.query?.sensor_id || req.query?.relay_id || req.body?.relay_id;
     if (sensorId) {
       const sensor = await Sensor.findOne({ sensorId, userId: user._id });
