@@ -16,8 +16,24 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000", "http://wifi-nodes-backend-rfq.app.cern.ch"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-api-key", "Authorization"]
+}));
+
 app.use(express.json());
+
+// Global error handler for uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error("🔥 UNCAUGHT EXCEPTION:", err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error("🔥 UNHANDLED REJECTION:", reason);
+});
+
 
 // MongoDB Connection
 mongoose
