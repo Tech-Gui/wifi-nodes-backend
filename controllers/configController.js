@@ -26,7 +26,9 @@ exports.getConfig = async (req, res) => {
         tankHeightCm: sensor.tankHeightCm,
         tankRadiusCm: sensor.tankRadiusCm,
         minThresholdCm: sensor.minThresholdCm,
+        distOffsetCm: sensor.distOffsetCm,
         maxCapacityLiters: sensor.maxCapacityLiters,
+
         pumpOnDistanceCm: sensor.pumpOnDistanceCm,
         pumpOffDistanceCm: sensor.pumpOffDistanceCm,
         automationEnabled: sensor.automationEnabled,
@@ -56,6 +58,7 @@ exports.updateConfig = async (req, res) => {
       "tankHeightCm",
       "tankRadiusCm",
       "minThresholdCm",
+      "distOffsetCm",
       "maxCapacityLiters",
       "pumpOnDistanceCm",
       "pumpOffDistanceCm",

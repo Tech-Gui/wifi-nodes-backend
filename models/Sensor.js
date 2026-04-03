@@ -23,7 +23,9 @@ const sensorSchema = new mongoose.Schema({
   // Tank dimensions and thresholds
   tankHeightCm: { type: Number, default: 100 },
   tankRadiusCm: { type: Number, default: 50 },
+  distOffsetCm: { type: Number, default: 0 },
   minThresholdCm: { type: Number, default: 10 },
+
   maxCapacityLiters: { type: Number, default: 1000 },
   pumpOnDistanceCm: { type: Number, default: 250 },
   pumpOffDistanceCm: { type: Number, default: 50 },
