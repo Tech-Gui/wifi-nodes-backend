@@ -21,7 +21,8 @@ const PORT = process.env.PORT || 8080;
 app.use(cors({
   origin: ["http://localhost:5173", "http://localhost:3000", "http://wifi-nodes-backend-rfq.app.cern.ch"],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+
   allowedHeaders: ["Content-Type", "x-api-key", "Authorization"]
 }));
 
