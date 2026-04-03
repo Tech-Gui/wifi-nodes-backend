@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: List
+items:
+
+  # --- 1. MongoDB Secret ---
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: wifi-nodes-backend-secret
+    stringData:
+      MONGODB_URI: "mongodb://mongo:27017/wifi-nodes" # Change to your cluster MongoDB URI
+
+  # --- 2. Deployment ---
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: wifi-nodes-backend
+      labels:
+        app: wifi-nodes-backend
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: wifi-nodes-backend
+      template:
+        metadata:
+          labels:
+            app: wifi-nodes-backend
+        spec:
+          containers:
+            - name: wifi-nodes-backend
+              image: image-registry.openshift-image-registry.svc:5000/YOUR_PROJECT/wifi-nodes-backend:latest
+              ports:
+                - containerPort: 8080
+              env:
+                - name: PORT
+                  value: "8080"
+                - name: MONGODB_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: wifi-nodes-backend-secret
+                      key: MONGODB_URI
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              readinessProbe:
+                httpGet:
+                  path: /ready
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 10
+              resources:
+                limits:
+                  memory: "256Mi"
+                  cpu: "250m"
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+
+  # --- 3. Service ---
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: wifi-nodes-backend
+    spec:
+      selector:
+        app: wifi-nodes-backend
+      ports:
+        - port: 8080
+          targetPort: 8080
+      type: ClusterIP
+
+  # --- 4. Route (OKD external access) ---
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: wifi-nodes-backend
+    spec:
+      to:
+        kind: Service
+        name: wifi-nodes-backend
+      port:
+        targetPort: 8080
+      tls:
+        termination: edge
