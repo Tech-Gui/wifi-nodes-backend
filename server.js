@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000", "http://wifi-nodes-backend-rfq.app.cern.ch"],
+  origin: ["http://localhost:5173", "http://localhost:3000", "http://wifi-nodes-backend-rfq.app.cern.ch", "https://univen-smart-farm.onrender.com"],
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
 
