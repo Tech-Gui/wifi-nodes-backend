@@ -34,6 +34,7 @@ const sensorSchema = new mongoose.Schema({
   distOffsetCm: { type: Number, default: 0 },
   calibEmptyReading: { type: Number, default: 0 }, // Raw sensor cm when tank is empty
   calibFullReading: { type: Number, default: 0 },  // Raw sensor cm when tank is full
+  calibScaleFactor: { type: Number, default: 1.0 }, // Linear remap scale factor
   minThresholdCm: { type: Number, default: 10 },
 
   maxCapacityLiters: { type: Number, default: 500 },
