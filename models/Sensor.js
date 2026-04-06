@@ -27,8 +27,9 @@ const sensorSchema = new mongoose.Schema({
   minThresholdCm: { type: Number, default: 10 },
 
   maxCapacityLiters: { type: Number, default: 1000 },
-  pumpOnDistanceCm: { type: Number, default: 250 },
-  pumpOffDistanceCm: { type: Number, default: 50 },
+  maxCapacityLiters: { type: Number, default: 500 },
+  pumpOnDistanceCm: { type: Number, default: 90 }, // Starts when dist >= 90cm (lower water)
+  pumpOffDistanceCm: { type: Number, default: 10 }, // Stops when dist <= 10cm (near full)
 
   // Automation Toggles
   automationEnabled: {
