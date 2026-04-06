@@ -15,6 +15,12 @@ exports.sendCommand = async (req, res) => {
       return res.status(400).json({ error: "action must be 'ON' or 'OFF'" });
     }
 
+    // Clear any existing pending commands for this specific channel to ensure the new one takes precedence
+    await RelayCommand.updateMany(
+      { relayId: relay_id, userId: req.user._id, channel, status: "pending" },
+      { $set: { status: "overridden" } }
+    );
+
     const command = new RelayCommand({
       relayId: relay_id,
       userId: req.user._id,

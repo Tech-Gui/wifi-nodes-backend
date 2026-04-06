@@ -75,8 +75,11 @@ async function issueCommand(relayId, userId, channel, action) {
     // If pending command is already the same action, do nothing
     if (pending.action === action) return;
     
-    // If pending command is the opposite action, we can either cancel it or just let the new one queue.
-    // For simplicity, we just queue the new one.
+    // If pending command is the opposite action, cancel it
+    await RelayCommand.updateMany(
+      { relayId, userId, channel, status: "pending" },
+      { $set: { status: "overridden" } }
+    );
   }
 
   const command = new RelayCommand({
