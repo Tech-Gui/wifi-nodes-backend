@@ -61,7 +61,7 @@ exports.updateConfig = async (req, res) => {
       "tankShape",
       "tankLengthCm", "tankWidthCm", "tankBottomRadiusCm", "tankTopRadiusCm",
       "soilDryThresholdPct", "soilWetThresholdPct", "soilDryRawValue", "soilWetRawValue",
-      "distOffsetCm", "minThresholdCm", "maxCapacityLiters",
+      "distOffsetCm", "calibEmptyReading", "calibFullReading", "minThresholdCm", "maxCapacityLiters",
       "pumpOnDistanceCm",
       "pumpOffDistanceCm",
       "automationEnabled",

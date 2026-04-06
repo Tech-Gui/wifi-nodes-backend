@@ -32,6 +32,8 @@ const sensorSchema = new mongoose.Schema({
   tankTopRadiusCm: { type: Number, default: 50 },    // For Conical Frustum
   
   distOffsetCm: { type: Number, default: 0 },
+  calibEmptyReading: { type: Number, default: 0 }, // Raw sensor cm when tank is empty
+  calibFullReading: { type: Number, default: 0 },  // Raw sensor cm when tank is full
   minThresholdCm: { type: Number, default: 10 },
 
   maxCapacityLiters: { type: Number, default: 500 },
