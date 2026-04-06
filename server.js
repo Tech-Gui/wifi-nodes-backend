@@ -26,7 +26,7 @@ const allowedOrigins = [
   "https://univen-smart-farm.onrender.com"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -39,12 +39,15 @@ app.use(cors({
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "x-api-key", "Authorization"]
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Explicitly handle OPTIONS preflight for all routes
-app.options('*', cors());
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Global error handler for uncaught exceptions
 process.on('uncaughtException', (err) => {
