@@ -1,5 +1,6 @@
 const RelayCommand = require("../models/RelayCommand");
 const Sensor = require("../models/Sensor");
+const RelayStatus = require("../models/RelayStatus");
 
 /**
  * automationService.js
@@ -63,7 +64,15 @@ exports.checkAndTriggerAutomation = async (sensorType, sensorId, userId, value) 
  * Helper to issue a relay command if it's not already pending a target state
  */
 async function issueCommand(relayId, userId, channel, action) {
-  // Check if a pending command for this relay/channel/action already exists to avoid spamming
+  // 1. Check if hardware already matches target state to avoid flooding
+  const status = await RelayStatus.findOne({ relayId, userId });
+  if (status) {
+    const isCurrentlyOn = channel === 'water_tank' ? status.waterTankState : status.irrigationState;
+    if (action === 'ON' && isCurrentlyOn) return;
+    if (action === 'OFF' && !isCurrentlyOn) return;
+  }
+
+  // 2. Check if a pending command for this relay/channel/action already exists to avoid spamming
   const pending = await RelayCommand.findOne({
     relayId,
     userId,

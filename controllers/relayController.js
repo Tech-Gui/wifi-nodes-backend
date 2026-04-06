@@ -91,9 +91,19 @@ exports.reportStatus = async (req, res) => {
 exports.getStatus = async (req, res) => {
   try {
     const { relay_id } = req.query;
-    const query = { userId: req.user._id };
-    if (relay_id) query.relayId = relay_id;
-    const statuses = await RelayStatus.find(query).sort({ timestamp: -1 });
+    const matchQuery = { userId: req.user._id };
+    if (relay_id) matchQuery.relayId = relay_id;
+
+    const statuses = await RelayStatus.aggregate([
+      { $match: matchQuery },
+      { $sort: { timestamp: -1 } },
+      { $group: {
+        _id: "$relayId",
+        latest: { $first: "$$ROOT" }
+      }},
+      { $replaceRoot: { newRoot: "$latest" } }
+    ]);
+
     res.json({ success: true, data: statuses });
   } catch (error) {
     res.status(500).json({ error: "Failed to get relay status", message: error.message });
