@@ -62,7 +62,9 @@ exports.updateConfig = async (req, res) => {
       "maxCapacityLiters",
       "pumpOnDistanceCm",
       "pumpOffDistanceCm",
-      "automationEnabled"
+      "automationEnabled",
+      "linkedWaterLevelId",
+      "linkedSoilMoistureId"
     ];
 
     const filteredUpdates = {};

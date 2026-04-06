@@ -35,6 +35,10 @@ const sensorSchema = new mongoose.Schema({
     waterPump: { type: Boolean, default: true },
     irrigation: { type: Boolean, default: true },
   },
+
+  // Linked Sensors for Automation (for dual_relay nodes)
+  linkedWaterLevelId: { type: String, default: null }, // sensorId e.g. ESP32_WATER_1
+  linkedSoilMoistureId: { type: String, default: null }, // sensorId e.g. ESP32_SOIL_1
 });
 
 

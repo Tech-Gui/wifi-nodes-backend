@@ -1,4 +1,5 @@
 const WaterLevel = require("../models/WaterLevel");
+const automationService = require("../services/automationService");
 
 exports.create = async (req, res) => {
   try {
@@ -9,6 +10,10 @@ exports.create = async (req, res) => {
     const reading = new WaterLevel({ sensorId: sensor_id, userId: req.user._id, value });
     await reading.save();
     console.log(`[Water Level] User: ${req.user.username}, Sensor: ${sensor_id}, Value: ${value}cm`);
+    
+    // Trigger automation check
+    await automationService.checkAndTriggerAutomation("water_level", sensor_id, req.user._id, value);
+    
     res.status(201).json({ success: true, data: reading });
   } catch (error) {
     res.status(500).json({ error: "Failed to save water level reading", message: error.message });
