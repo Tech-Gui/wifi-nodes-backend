@@ -16,9 +16,11 @@ const sensorSchema = new mongoose.Schema({
   // Configuration Settings (Settings Page)
   reportInterval: { type: Number, default: 600 }, // Seconds (for Deep Sleep)
   
-  // Soil moisture thresholds
+  // Soil moisture thresholds & Calibration
   soilDryThresholdPct: { type: Number, default: 30 },
   soilWetThresholdPct: { type: Number, default: 70 },
+  soilDryRawValue: { type: Number, default: 4095 }, // Raw ADC when dry
+  soilWetRawValue: { type: Number, default: 2000 }, // Raw ADC when wet (submerged)
 
   // Tank dimensions and shape
   tankShape: { type: String, enum: ["cylindrical", "rectangular", "conical_frustum"], default: "cylindrical" },
