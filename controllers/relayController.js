@@ -1,6 +1,16 @@
 const RelayCommand = require("../models/RelayCommand");
 const RelayStatus = require("../models/RelayStatus");
 
+function commandMatchesReportedState(command, irrigationState, waterTankState) {
+  if (command.channel === "irrigation") {
+    if (irrigationState === undefined) return null;
+    return command.action === "ON" ? irrigationState : !irrigationState;
+  }
+
+  if (waterTankState === undefined) return null;
+  return command.action === "ON" ? waterTankState : !waterTankState;
+}
+
 // POST /api/relay/command — Dashboard sends a command to a relay
 exports.sendCommand = async (req, res) => {
   try {
@@ -51,7 +61,10 @@ exports.getPending = async (req, res) => {
 
     const ids = commands.map((c) => c._id);
     if (ids.length > 0) {
-      await RelayCommand.updateMany({ _id: { $in: ids } }, { status: "acknowledged" });
+      await RelayCommand.updateMany(
+        { _id: { $in: ids } },
+        { $set: { status: "delivered", deliveredAt: new Date() } }
+      );
     }
 
     res.json({ success: true, count: commands.length, data: commands });
@@ -68,17 +81,64 @@ exports.reportStatus = async (req, res) => {
       return res.status(400).json({ error: "Missing relay_id" });
     }
 
+    const irrigationState =
+      irrigation_state === undefined ? undefined : Boolean(irrigation_state);
+    const waterTankState =
+      water_tank_state === undefined ? undefined : Boolean(water_tank_state);
+
+    const existingStatus = await RelayStatus.findOne({
+      relayId: relay_id,
+      userId: req.user._id,
+    });
+
     const status = await RelayStatus.findOneAndUpdate(
       { relayId: relay_id, userId: req.user._id },
       {
         relayId: relay_id,
         userId: req.user._id,
-        irrigationState: !!irrigation_state,
-        waterTankState: !!water_tank_state,
+        irrigationState: irrigationState ?? existingStatus?.irrigationState ?? false,
+        waterTankState: waterTankState ?? existingStatus?.waterTankState ?? false,
         timestamp: new Date(),
       },
       { upsert: true, new: true }
     );
+
+    const openCommands = await RelayCommand.find({
+      relayId: relay_id,
+      userId: req.user._id,
+      status: { $in: ["pending", "delivered"] },
+    }).sort({ timestamp: 1 });
+
+    const executedIds = [];
+    const failedIds = [];
+
+    for (const command of openCommands) {
+      const matched = commandMatchesReportedState(
+        command,
+        irrigationState,
+        waterTankState
+      );
+
+      if (matched === true) {
+        executedIds.push(command._id);
+      } else if (matched === false && command.status === "delivered") {
+        failedIds.push(command._id);
+      }
+    }
+
+    if (executedIds.length > 0) {
+      await RelayCommand.updateMany(
+        { _id: { $in: executedIds } },
+        { $set: { status: "executed", executedAt: new Date() } }
+      );
+    }
+
+    if (failedIds.length > 0) {
+      await RelayCommand.updateMany(
+        { _id: { $in: failedIds } },
+        { $set: { status: "failed" } }
+      );
+    }
 
     console.log(`[Relay Status] User: ${req.user.username}, ${relay_id}: IR=${irrigation_state}, WT=${water_tank_state}`);
     res.json({ success: true, data: status });
