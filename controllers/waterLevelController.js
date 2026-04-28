@@ -26,7 +26,7 @@ exports.getLatest = async (req, res) => {
     const query = { userId: req.user._id };
     if (sensor_id) query.sensorId = sensor_id;
     const reading = await WaterLevel.findOne(query).sort({ timestamp: -1 });
-    if (!reading) return res.status(404).json({ error: "No readings found" });
+    if (!reading) return res.json({ success: true, data: null });
     res.json({ success: true, data: reading });
   } catch (error) {
     res.status(500).json({ error: "Failed to get latest water level", message: error.message });

@@ -25,8 +25,10 @@ const allowedOrigins = [
   "http://localhost:3000", 
   "http://127.0.0.1:5173",
   "http://127.0.0.1:3000",
-  "http://wifi-nodes-backend-rfq.app.cern.ch",
-  "https://wifi-nodes-backend-rfq.app.cern.ch",
+  "http://wifi-nodes-backend-testproj.app.cern.ch",
+  "https://wifi-nodes-backend-testproj.app.cern.ch",
+  "https://mashstem-frontend-testproj.app.cern.ch",
+  "http://mashstem-frontend-testproj.app.cern.ch",
   "https://univen-smart-farm.onrender.com"
 ];
 
