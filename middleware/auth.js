@@ -12,6 +12,7 @@ const Sensor = require("../models/Sensor");
  *   - GET routes without a sensor_id filter (returns all user data)
  */
 const authenticate = async (req, res, next) => {
+  console.log(`[Request] ${req.method} ${req.originalUrl} from ${req.headers.origin || 'unknown'}`);
   try {
     const apiKey = req.headers["x-api-key"];
     if (!apiKey) {

@@ -1,4 +1,5 @@
 const Sensor = require("../models/Sensor");
+const OtaPolicy = require("../models/OtaPolicy");
 
 /**
  * GET /api/sensors/:sensorId/config
@@ -13,6 +14,13 @@ exports.getConfig = async (req, res) => {
       return res.status(404).json({ error: "Sensor not found or access denied" });
     }
 
+    // Merge OTA type policy with per-node override
+    const policy = await OtaPolicy.findOne({ nodeType: sensor.type, userId: req.user._id });
+    const effectiveOta = {
+      otaEnabled: sensor.otaOverride?.enabled ?? policy?.otaEnabled ?? true,
+      otaCheckInterval: sensor.otaOverride?.checkInterval ?? policy?.otaCheckInterval ?? 3600,
+    };
+
     res.json({
       success: true,
       data: {
@@ -21,17 +29,44 @@ exports.getConfig = async (req, res) => {
         type: sensor.type,
         location: sensor.location,
         reportInterval: sensor.reportInterval,
+        
+        // Soil moisture thresholds & Calibration
         soilDryThresholdPct: sensor.soilDryThresholdPct,
         soilWetThresholdPct: sensor.soilWetThresholdPct,
+        soilDryRawValue: sensor.soilDryRawValue,
+        soilWetRawValue: sensor.soilWetRawValue,
+
+        // Tank dimensions and shape
+        tankShape: sensor.tankShape,
         tankHeightCm: sensor.tankHeightCm,
         tankRadiusCm: sensor.tankRadiusCm,
-        minThresholdCm: sensor.minThresholdCm,
+        tankLengthCm: sensor.tankLengthCm,
+        tankWidthCm: sensor.tankWidthCm,
+        tankBottomRadiusCm: sensor.tankBottomRadiusCm,
+        tankTopRadiusCm: sensor.tankTopRadiusCm,
+        
         distOffsetCm: sensor.distOffsetCm,
+        calibEmptyReading: sensor.calibEmptyReading,
+        calibFullReading: sensor.calibFullReading,
+        calibScaleFactor: sensor.calibScaleFactor,
+        minThresholdCm: sensor.minThresholdCm,
         maxCapacityLiters: sensor.maxCapacityLiters,
 
         pumpOnDistanceCm: sensor.pumpOnDistanceCm,
         pumpOffDistanceCm: sensor.pumpOffDistanceCm,
         automationEnabled: sensor.automationEnabled,
+
+        // Linked Sensors
+        linkedWaterLevelId: sensor.linkedWaterLevelId,
+        linkedSoilMoistureId: sensor.linkedSoilMoistureId,
+
+        // OTA (merged: type policy + per-node override)
+        otaEnabled: effectiveOta.otaEnabled,
+        otaCheckInterval: effectiveOta.otaCheckInterval,
+        firmwareVersion: sensor.firmwareVersion,
+        lastOtaCheck: sensor.lastOtaCheck,
+        lastOtaResult: sensor.lastOtaResult,
+        otaHasOverride: sensor.otaOverride?.enabled !== null && sensor.otaOverride?.enabled !== undefined,
       },
     });
   } catch (error) {
@@ -66,7 +101,8 @@ exports.updateConfig = async (req, res) => {
       "pumpOffDistanceCm",
       "automationEnabled",
       "linkedWaterLevelId",
-      "linkedSoilMoistureId"
+      "linkedSoilMoistureId",
+      "otaOverride"
     ];
 
     const filteredUpdates = {};
@@ -79,6 +115,14 @@ exports.updateConfig = async (req, res) => {
           }
           if (updates[key].irrigation !== undefined) {
             filteredUpdates["automationEnabled.irrigation"] = updates[key].irrigation;
+          }
+        } else if (key === "otaOverride" && typeof updates[key] === "object") {
+          // Handle nested OTA override fields
+          if (updates[key].enabled !== undefined) {
+            filteredUpdates["otaOverride.enabled"] = updates[key].enabled;
+          }
+          if (updates[key].checkInterval !== undefined) {
+            filteredUpdates["otaOverride.checkInterval"] = updates[key].checkInterval;
           }
         } else {
           filteredUpdates[key] = updates[key];

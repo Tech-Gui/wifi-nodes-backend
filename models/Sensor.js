@@ -50,6 +50,21 @@ const sensorSchema = new mongoose.Schema({
   // Linked Sensors for Automation (for dual_relay nodes)
   linkedWaterLevelId: { type: String, default: null }, // sensorId e.g. ESP32_WATER_1
   linkedSoilMoistureId: { type: String, default: null }, // sensorId e.g. ESP32_SOIL_1
+
+  // OTA Per-Node Override (null = inherit from type policy)
+  otaOverride: {
+    enabled: { type: Boolean, default: null },       // null = use type policy
+    checkInterval: { type: Number, default: null },  // null = use type policy
+  },
+
+  // OTA Tracking (written by ESP32 ack)
+  firmwareVersion: { type: String, default: "unknown" },
+  lastOtaCheck: { type: Date, default: null },
+  lastOtaResult: {
+    type: String,
+    enum: ["success", "failed", "up_to_date", null],
+    default: null,
+  },
 });
 
 

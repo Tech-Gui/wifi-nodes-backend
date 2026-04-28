@@ -12,6 +12,7 @@ const soilMoistureRoutes = require("./routes/soilMoistureRoutes");
 const waterLevelRoutes = require("./routes/waterLevelRoutes");
 const relayRoutes = require("./routes/relayRoutes");
 const sensorConfigRoutes = require("./routes/sensorConfigRoutes");
+const otaRoutes = require("./routes/otaRoutes");
 
 
 const app = express();
@@ -21,6 +22,8 @@ const PORT = process.env.PORT || 8080;
 const allowedOrigins = [
   "http://localhost:5173", 
   "http://localhost:3000", 
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
   "http://wifi-nodes-backend-rfq.app.cern.ch",
   "https://wifi-nodes-backend-rfq.app.cern.ch",
   "https://univen-smart-farm.onrender.com"
@@ -77,6 +80,7 @@ app.use("/api/humidity", humidityRoutes);
 app.use("/api/soil-moisture", soilMoistureRoutes);
 app.use("/api/water-level", waterLevelRoutes);
 app.use("/api/relay", relayRoutes);
+app.use("/api/ota", otaRoutes);
 
 // Health / readiness probes (OKD / Kubernetes)
 app.get("/health", (req, res) => {
@@ -126,9 +130,41 @@ app.get("/", (req, res) => {
       "POST   /api/relay/status          — ESP32 reports relay state",
       "GET    /api/relay/status           — Get relay status",
       "",
-      "GET    /health                     — Liveness probe",
-      "GET    /ready                      — Readiness probe",
+      "GET    /api/ota/policy              — List OTA policies (per type)",
+      "PUT    /api/ota/policy/:nodeType    — Update OTA policy for a node type",
+      "POST   /api/ota/ack                 — ESP32 reports OTA result",
+      "GET    /api/ota/status              — Get all nodes firmware status",
+      "",
+      "GET    /health                      — Liveness probe",
+      "GET    /ready                       — Readiness probe",
     ],
+  });
+});
+
+// 404 Handler for API routes
+app.use("/api", (req, res, next) => {
+  const err = new Error(`API Endpoint Not Found: ${req.method} ${req.originalUrl}`);
+  err.status = 404;
+  next(err);
+});
+
+// Final Error Handler (MUST be last)
+// Ensures CORS headers are present even on 500 errors to prevent browser CORS failures
+app.use((err, req, res, next) => {
+  console.error("❌ BACKEND ERROR:", err.stack);
+  
+  // Set CORS headers manually if they aren't there yet
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+
+  const statusCode = err.status || 500;
+  res.status(statusCode).json({
+    error: err.name || "Internal Server Error",
+    message: err.message || "An unexpected error occurred",
+    path: req.path
   });
 });
 
