@@ -83,7 +83,7 @@ app.use("/api/water-level", waterLevelRoutes);
 app.use("/api/relay", relayRoutes);
 app.use("/api/ota", otaRoutes);
 
-// Health / readiness probes (OKD / Kubernetes)
+// Health / readiness probes (OKD / Kubernetes)//
 app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date() });
 });
