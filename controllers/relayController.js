@@ -61,6 +61,7 @@ exports.getPending = async (req, res) => {
 
     const ids = commands.map((c) => c._id);
     if (ids.length > 0) {
+      console.log(`[Relay Poll] ${relay_id} fetched ${ids.length} commands. Marking as delivered.`);
       await RelayCommand.updateMany(
         { _id: { $in: ids } },
         { $set: { status: "delivered", deliveredAt: new Date() } }

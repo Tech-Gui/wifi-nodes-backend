@@ -85,24 +85,11 @@ async function issueCommand(relayId, userId, channel, action) {
     if (action === 'OFF' && !isCurrentlyOn) return;
   }
 
-  // 2. Check if a pending command for this relay/channel/action already exists to avoid spamming
-  const pending = await RelayCommand.findOne({
-    relayId,
-    userId,
-    channel,
-    status: "pending",
-  });
-
-  if (pending) {
-    // If pending command is already the same action, do nothing
-    if (pending.action === action) return;
-    
-    // If pending command is the opposite action, cancel it
-    await RelayCommand.updateMany(
-      { relayId, userId, channel, status: "pending" },
-      { $set: { status: "overridden" } }
-    );
-  }
+  // 2. Clear any existing pending commands for this relay/channel to ensure the new one takes precedence
+  await RelayCommand.updateMany(
+    { relayId, userId, channel, status: "pending" },
+    { $set: { status: "overridden" } }
+  );
 
   const command = new RelayCommand({
     relayId,
