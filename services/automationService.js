@@ -44,13 +44,26 @@ exports.checkAndTriggerAutomation = async (sensorType, sensorId, userId, value) 
       else if (sensorType === "soil_moisture") {
         if (!relay.automationEnabled?.irrigation) continue;
 
+        // Fetch the soil moisture sensor to get calibration values for raw -> pct conversion
+        const soilSensor = await Sensor.findOne({ sensorId: sensorId, userId });
+        if (!soilSensor) continue;
+
+        const soilDry = soilSensor.soilDryRawValue ?? 4095;
+        const soilWet = soilSensor.soilWetRawValue ?? 2000;
+        
+        let moisturePct = 0;
+        if (soilDry !== soilWet) {
+          moisturePct = Math.round(((value - soilDry) / (soilWet - soilDry)) * 100);
+          moisturePct = Math.max(0, Math.min(100, moisturePct));
+        }
+
         // SOIL LOGIC: Lower percentage = dryer soil.
         // soilDryThresholdPct: Moisture % at which irrigation starts (e.g. 30%)
         // soilWetThresholdPct: Moisture % at which irrigation stops (e.g. 70%)
 
-        if (value <= relay.soilDryThresholdPct) {
+        if (moisturePct <= relay.soilDryThresholdPct) {
           await issueCommand(relay.sensorId, userId, "irrigation", "ON");
-        } else if (value >= relay.soilWetThresholdPct) {
+        } else if (moisturePct >= relay.soilWetThresholdPct) {
           await issueCommand(relay.sensorId, userId, "irrigation", "OFF");
         }
       }
