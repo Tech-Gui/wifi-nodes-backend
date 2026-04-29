@@ -30,13 +30,23 @@ exports.checkAndTriggerAutomation = async (sensorType, sensorId, userId, value) 
       if (sensorType === "water_level") {
         if (!relay.automationEnabled?.waterPump) continue;
 
+        // Fetch the water level sensor to get calibration values for raw -> true cm conversion
+        const waterSensor = await Sensor.findOne({ sensorId: sensorId, userId });
+        if (!waterSensor) continue;
+
+        const sf = waterSensor.calibScaleFactor || 1.0;
+        const fullRef = waterSensor.calibFullReading || 0;
+        const tankHeight = waterSensor.tankHeightCm || 100;
+
+        // Apply calibration: sensorDistance = (raw - fullRef) * sf
+        let sensorDistance = (value - fullRef) * sf;
+        if (sensorDistance < 0) sensorDistance = 0;
+        if (sensorDistance > tankHeight) sensorDistance = tankHeight;
+
         // TANK LOGIC: Higher distance = lower water.
-        // pumpOnDistanceCm: Distance at which pump starts (e.g. 250cm, tank nearly empty)
-        // pumpOffDistanceCm: Distance at which pump stops (e.g. 50cm, tank nearly full)
-        
-        if (value >= relay.pumpOnDistanceCm) {
+        if (sensorDistance >= relay.pumpOnDistanceCm) {
           await issueCommand(relay.sensorId, userId, "water_tank", "ON");
-        } else if (value <= relay.pumpOffDistanceCm) {
+        } else if (sensorDistance <= relay.pumpOffDistanceCm) {
           await issueCommand(relay.sensorId, userId, "water_tank", "OFF");
         }
       } 
