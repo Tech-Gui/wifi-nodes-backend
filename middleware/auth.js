@@ -42,9 +42,12 @@ const authenticate = async (req, res, next) => {
           sensor_id: sensorId,
         });
       }
-      // Update last seen
-      sensor.lastSeen = new Date();
-      await sensor.save();
+      // Update last seen only if request comes from the hardware node (not frontend polling)
+      const userAgent = req.headers["user-agent"] || "";
+      if (userAgent.includes("ESP") || userAgent.includes("Arduino") || req.headers["x-node-request"]) {
+        sensor.lastSeen = new Date();
+        await sensor.save();
+      }
       req.sensor = sensor;
     }
 
