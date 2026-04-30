@@ -1,5 +1,6 @@
 const Sensor = require("../models/Sensor");
 const OtaPolicy = require("../models/OtaPolicy");
+const adaptiveService = require("../services/adaptiveReportingService");
 
 /**
  * GET /api/sensors/:sensorId/config
@@ -20,6 +21,8 @@ exports.getConfig = async (req, res) => {
       otaEnabled: sensor.otaOverride?.enabled ?? policy?.otaEnabled ?? true,
       otaCheckInterval: sensor.otaOverride?.checkInterval ?? policy?.otaCheckInterval ?? 3600,
     };
+    // Calculate Adaptive Reporting Interval
+    const adaptiveInterval = await adaptiveService.calculateAdaptiveInterval(sensor);
 
     res.json({
       success: true,
@@ -28,7 +31,7 @@ exports.getConfig = async (req, res) => {
         name: sensor.name,
         type: sensor.type,
         location: sensor.location,
-        reportInterval: sensor.reportInterval,
+        reportInterval: adaptiveInterval,
         
         // Soil moisture thresholds & Calibration
         soilDryThresholdPct: sensor.soilDryThresholdPct,
