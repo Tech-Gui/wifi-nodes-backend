@@ -14,6 +14,7 @@ const waterLevelRoutes = require("./routes/waterLevelRoutes");
 const relayRoutes = require("./routes/relayRoutes");
 const sensorConfigRoutes = require("./routes/sensorConfigRoutes");
 const otaRoutes = require("./routes/otaRoutes");
+const logRoutes = require("./routes/logRoutes");
 
 
 const app = express();
@@ -84,6 +85,7 @@ app.use("/api/soil-moisture", soilMoistureRoutes);
 app.use("/api/water-level", waterLevelRoutes);
 app.use("/api/relay", relayRoutes);
 app.use("/api/ota", otaRoutes);
+app.use("/api/logs", logRoutes);
 
 // Health / readiness probes (OKD / Kubernetes)//
 app.get("/health", (req, res) => {

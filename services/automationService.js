@@ -1,6 +1,7 @@
 const RelayCommand = require("../models/RelayCommand");
 const Sensor = require("../models/Sensor");
 const RelayStatus = require("../models/RelayStatus");
+const AutomationLog = require("../models/AutomationLog");
 
 /**
  * automationService.js
@@ -44,11 +45,29 @@ exports.checkAndTriggerAutomation = async (sensorType, sensorId, userId, value) 
         if (sensorDistance > tankHeight) sensorDistance = tankHeight;
 
         // TANK LOGIC: Higher distance = lower water.
+        let decision = "NONE";
+        let reason = `Volume: ${Math.round(20 - (sensorDistance/32 * 20))}L (Dist: ${sensorDistance.toFixed(1)}cm)`;
+
         if (sensorDistance >= relay.pumpOnDistanceCm) {
+          decision = "ON";
+          reason += ` >= Start (${relay.pumpOnDistanceCm}cm)`;
           await issueCommand(relay.sensorId, userId, "water_tank", "ON");
         } else if (sensorDistance <= relay.pumpOffDistanceCm) {
+          decision = "OFF";
+          reason += ` <= Stop (${relay.pumpOffDistanceCm}cm)`;
           await issueCommand(relay.sensorId, userId, "water_tank", "OFF");
+        } else {
+          reason += ` within range (${relay.pumpOffDistanceCm} - ${relay.pumpOnDistanceCm}cm)`;
         }
+
+        await AutomationLog.create({
+          userId,
+          sensorId,
+          type: "water_level",
+          value: sensorDistance,
+          decision,
+          reason
+        });
       } 
       
       else if (sensorType === "soil_moisture") {
@@ -68,14 +87,29 @@ exports.checkAndTriggerAutomation = async (sensorType, sensorId, userId, value) 
         }
 
         // SOIL LOGIC: Lower percentage = dryer soil.
-        // soilDryThresholdPct: Moisture % at which irrigation starts (e.g. 30%)
-        // soilWetThresholdPct: Moisture % at which irrigation stops (e.g. 70%)
+        let decision = "NONE";
+        let reason = `Moisture: ${moisturePct}%`;
 
         if (moisturePct <= relay.soilDryThresholdPct) {
+          decision = "ON";
+          reason += ` <= Dry (${relay.soilDryThresholdPct}%)`;
           await issueCommand(relay.sensorId, userId, "irrigation", "ON");
         } else if (moisturePct >= relay.soilWetThresholdPct) {
+          decision = "OFF";
+          reason += ` >= Wet (${relay.soilWetThresholdPct}%)`;
           await issueCommand(relay.sensorId, userId, "irrigation", "OFF");
+        } else {
+          reason += ` within range (${relay.soilDryThresholdPct} - ${relay.soilWetThresholdPct}%)`;
         }
+
+        await AutomationLog.create({
+          userId,
+          sensorId,
+          type: "soil_moisture",
+          value: moisturePct,
+          decision,
+          reason
+        });
       }
     }
   } catch (err) {
