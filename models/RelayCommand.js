@@ -7,7 +7,7 @@ const relayCommandSchema = new mongoose.Schema({
   action: { type: String, enum: ["ON", "OFF"], required: true },
   status: {
     type: String,
-    enum: ["pending", "delivered", "executed", "overridden", "failed"],
+    enum: ["pending", "delivered", "executed", "overridden", "failed", "expired"],
     default: "pending",
   },
   deliveredAt: { type: Date, default: null },

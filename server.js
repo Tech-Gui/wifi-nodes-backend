@@ -15,6 +15,7 @@ const relayRoutes = require("./routes/relayRoutes");
 const sensorConfigRoutes = require("./routes/sensorConfigRoutes");
 const otaRoutes = require("./routes/otaRoutes");
 const logRoutes = require("./routes/logRoutes");
+const RelayCommand = require("./models/RelayCommand");
 
 
 const app = express();
@@ -177,4 +178,23 @@ app.use((err, req, res, next) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Wi-Fi Node Backend v2.0 running on port ${PORT}`);
   console.log(`🔐 Multi-tenant mode enabled`);
+
+  // Auto-expire commands after 1 minute if not delivered/executed
+  setInterval(async () => {
+    try {
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+      const result = await RelayCommand.updateMany(
+        { 
+          status: "pending", 
+          timestamp: { $lt: oneMinuteAgo } 
+        },
+        { $set: { status: "expired" } }
+      );
+      if (result.modifiedCount > 0) {
+        console.log(`🧹 Cleared ${result.modifiedCount} expired commands.`);
+      }
+    } catch (err) {
+      console.error("❌ Cleanup job failed:", err);
+    }
+  }, 30000); // Check every 30 seconds
 });
