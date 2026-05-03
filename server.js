@@ -33,7 +33,8 @@ const allowedOrigins = [
   "https://wifi-nodes-backend-testproj.app.cern.ch",
   "https://mashstem-frontend-testproj.app.cern.ch",
   "http://mashstem-frontend-testproj.app.cern.ch",
-  "https://univen-smart-farm.onrender.com"
+  "https://univen-smart-farm.onrender.com",
+  "https://iaq-portal.onrender.com"
 ];
 
 const corsOptions = {
