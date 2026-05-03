@@ -16,6 +16,7 @@ const sensorConfigRoutes = require("./routes/sensorConfigRoutes");
 const otaRoutes = require("./routes/otaRoutes");
 const logRoutes = require("./routes/logRoutes");
 const userRoutes = require("./routes/userRoutes");
+const loraRoutes = require("./routes/loraRoutes");
 const RelayCommand = require("./models/RelayCommand");
 
 
@@ -76,6 +77,7 @@ mongoose
 
 // Public routes (no auth)
 app.use("/api/auth", authRoutes);
+app.use("/lorawan", loraRoutes);
 
 // Protected routes (require x-api-key)
 app.use("/api/sensors", sensorRoutes);
