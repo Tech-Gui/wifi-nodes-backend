@@ -77,3 +77,32 @@ exports.getLatest = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch LoRaWAN data", message: error.message });
   }
 };
+
+/**
+ * Get all logs (with optional filtering and pagination)
+ */
+exports.getLogs = async (req, res) => {
+  try {
+    const { devEUI, limit = 100, page = 1 } = req.query;
+    const query = {};
+    if (devEUI) query.devEUI = devEUI;
+
+    const logs = await LoRaWANData.find(query)
+      .sort({ timestamp: -1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+
+    const total = await LoRaWANData.countDocuments(query);
+
+    res.json({
+      success: true,
+      count: logs.length,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      data: logs
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch logs", message: error.message });
+  }
+};

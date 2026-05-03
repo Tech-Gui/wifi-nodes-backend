@@ -7,6 +7,7 @@ const loraController = require("../controllers/loraController");
 router.post("/", loraController.handleUplink);
 
 // Optional: Endpoint to query data (for debugging or frontend use)
+router.get("/logs", loraController.getLogs);
 router.get("/:devEUI/latest", loraController.getLatest);
 
 module.exports = router;
