@@ -10,4 +10,10 @@ router.post("/", loraController.handleUplink);
 router.get("/logs", loraController.getLogs);
 router.get("/:devEUI/latest", loraController.getLatest);
 
+// Device Management Endpoints
+router.get("/devices", loraController.getDevices);
+router.post("/devices", loraController.addDevice);
+router.put("/devices/:devEUI", loraController.updateDevice);
+router.delete("/devices/:devEUI", loraController.deleteDevice);
+
 module.exports = router;

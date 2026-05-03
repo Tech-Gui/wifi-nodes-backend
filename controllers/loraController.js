@@ -1,4 +1,5 @@
 const LoRaWANData = require("../models/LoRaWANData");
+const LoRaDevice = require("../models/LoRaDevice");
 
 /**
  * Handle LoRaWAN Uplink from Milesight Gateway
@@ -12,38 +13,15 @@ exports.handleUplink = async (req, res) => {
     console.log("📥 [LoRaWAN] Received Uplink:", JSON.stringify(payload, null, 2));
 
     // Extract fields from Milesight/ChirpStack payload format
-    let {
+    const {
       devEUI,
       deviceName,
       applicationName,
-      applicationID,
       fPort,
       fCnt,
       data,
       object
     } = payload;
-
-    // If 'object' is missing (flattened payload), collect all extra fields into it
-    if (!object) {
-      const metadataFields = [
-        "devEUI", "deviceName", "applicationName", "applicationID", 
-        "fPort", "fCnt", "data", "timestamp", "time", "battery"
-      ];
-      const extraFields = {};
-      Object.keys(payload).forEach(key => {
-        if (!metadataFields.includes(key)) {
-          extraFields[key] = payload[key];
-        }
-      });
-      
-      // If we found sensor data (like co2, temp, etc.), put it in object
-      if (Object.keys(extraFields).length > 0) {
-        object = extraFields;
-      }
-    }
-
-    // Capture battery specifically if it's at the top level
-    const battery = payload.battery || (object ? object.battery : undefined);
 
     // Basic validation - DevEUI is the minimum required to identify a device
     if (!devEUI) {
@@ -61,9 +39,8 @@ exports.handleUplink = async (req, res) => {
       applicationName,
       fPort,
       fCnt,
-      battery,
       data, // This is usually the base64 encoded raw payload
-      object, // This now contains the extracted sensor data (co2, temp, etc.)
+      object, // This is the decoded JSON if a codec is used in the gateway
       rawPayload: payload
     });
 
@@ -128,5 +105,90 @@ exports.getLogs = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch logs", message: error.message });
+  }
+};
+
+/**
+ * Get all registered LoRaWAN devices
+ */
+exports.getDevices = async (req, res) => {
+  try {
+    const devices = await LoRaDevice.find().sort({ registeredAt: -1 });
+    res.json({ success: true, count: devices.length, data: devices });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch devices", message: error.message });
+  }
+};
+
+/**
+ * Register a new LoRaWAN device
+ */
+exports.addDevice = async (req, res) => {
+  try {
+    const { devEUI, name, building, room, latitude, longitude } = req.body;
+    
+    if (!devEUI || !name) {
+      return res.status(400).json({ error: "devEUI and name are required" });
+    }
+
+    const device = new LoRaDevice({
+      devEUI,
+      name,
+      building,
+      room,
+      latitude,
+      longitude
+    });
+
+    await device.save();
+    res.status(201).json({ success: true, data: device });
+  } catch (error) {
+    // Check for duplicate devEUI
+    if (error.code === 11000) {
+      return res.status(400).json({ error: "Device with this devEUI already exists" });
+    }
+    res.status(500).json({ error: "Failed to add device", message: error.message });
+  }
+};
+
+/**
+ * Update an existing LoRaWAN device
+ */
+exports.updateDevice = async (req, res) => {
+  try {
+    const { devEUI } = req.params;
+    const updateData = req.body;
+    
+    const device = await LoRaDevice.findOneAndUpdate(
+      { devEUI },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!device) {
+      return res.status(404).json({ error: "Device not found" });
+    }
+
+    res.json({ success: true, data: device });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update device", message: error.message });
+  }
+};
+
+/**
+ * Delete a LoRaWAN device
+ */
+exports.deleteDevice = async (req, res) => {
+  try {
+    const { devEUI } = req.params;
+    const device = await LoRaDevice.findOneAndDelete({ devEUI });
+    
+    if (!device) {
+      return res.status(404).json({ error: "Device not found" });
+    }
+
+    res.json({ success: true, message: "Device deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete device", message: error.message });
   }
 };
