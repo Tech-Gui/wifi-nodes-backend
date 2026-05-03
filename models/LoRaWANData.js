@@ -6,6 +6,7 @@ const loraWANDataSchema = new mongoose.Schema({
   applicationName: { type: String },
   fPort: { type: Number },
   fCnt: { type: Number },
+  battery: { type: Number },
   data: { type: String }, // Base64 raw data
   object: { type: mongoose.Schema.Types.Mixed }, // Decoded object if codec used
   timestamp: { type: Date, default: Date.now },

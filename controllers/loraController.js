@@ -12,15 +12,38 @@ exports.handleUplink = async (req, res) => {
     console.log("📥 [LoRaWAN] Received Uplink:", JSON.stringify(payload, null, 2));
 
     // Extract fields from Milesight/ChirpStack payload format
-    const {
+    let {
       devEUI,
       deviceName,
       applicationName,
+      applicationID,
       fPort,
       fCnt,
       data,
       object
     } = payload;
+
+    // If 'object' is missing (flattened payload), collect all extra fields into it
+    if (!object) {
+      const metadataFields = [
+        "devEUI", "deviceName", "applicationName", "applicationID", 
+        "fPort", "fCnt", "data", "timestamp", "time", "battery"
+      ];
+      const extraFields = {};
+      Object.keys(payload).forEach(key => {
+        if (!metadataFields.includes(key)) {
+          extraFields[key] = payload[key];
+        }
+      });
+      
+      // If we found sensor data (like co2, temp, etc.), put it in object
+      if (Object.keys(extraFields).length > 0) {
+        object = extraFields;
+      }
+    }
+
+    // Capture battery specifically if it's at the top level
+    const battery = payload.battery || (object ? object.battery : undefined);
 
     // Basic validation - DevEUI is the minimum required to identify a device
     if (!devEUI) {
@@ -38,8 +61,9 @@ exports.handleUplink = async (req, res) => {
       applicationName,
       fPort,
       fCnt,
+      battery,
       data, // This is usually the base64 encoded raw payload
-      object, // This is the decoded JSON if a codec is used in the gateway
+      object, // This now contains the extracted sensor data (co2, temp, etc.)
       rawPayload: payload
     });
 
