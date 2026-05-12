@@ -15,5 +15,6 @@ router.get("/devices", loraController.getDevices);
 router.post("/devices", loraController.addDevice);
 router.put("/devices/:devEUI", loraController.updateDevice);
 router.delete("/devices/:devEUI", loraController.deleteDevice);
+router.delete("/devices/:devEUI/logs", loraController.deleteLogs);
 
 module.exports = router;

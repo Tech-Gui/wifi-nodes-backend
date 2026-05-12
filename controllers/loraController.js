@@ -181,7 +181,7 @@ exports.updateDevice = async (req, res) => {
 };
 
 /**
- * Delete a LoRaWAN device
+ * Delete a LoRaWAN device and all its data
  */
 exports.deleteDevice = async (req, res) => {
   try {
@@ -192,8 +192,31 @@ exports.deleteDevice = async (req, res) => {
       return res.status(404).json({ error: "Device not found" });
     }
 
-    res.json({ success: true, message: "Device deleted successfully" });
+    // Also delete all associated log data
+    const logsResult = await LoRaWANData.deleteMany({ devEUI });
+
+    res.json({ 
+      success: true, 
+      message: `Device and ${logsResult.deletedCount} log entries deleted successfully` 
+    });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete device", message: error.message });
+  }
+};
+
+/**
+ * Delete log data for a specific device (purge data only, keep device)
+ */
+exports.deleteLogs = async (req, res) => {
+  try {
+    const { devEUI } = req.params;
+    const result = await LoRaWANData.deleteMany({ devEUI });
+
+    res.json({ 
+      success: true, 
+      message: `${result.deletedCount} log entries deleted for ${devEUI}` 
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete logs", message: error.message });
   }
 };
