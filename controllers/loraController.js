@@ -125,15 +125,20 @@ exports.getDevices = async (req, res) => {
  */
 exports.addDevice = async (req, res) => {
   try {
-    const { devEUI, name, building, room, latitude, longitude } = req.body;
+    const { devEUI, name, building, room, latitude, longitude, province, city, sensorType, macAddress, sensorModel } = req.body;
     
-    if (!devEUI || !name) {
+    if (!devEUI && !name) {
       return res.status(400).json({ error: "devEUI and name are required" });
     }
 
     const device = new LoRaDevice({
-      devEUI,
+      devEUI: devEUI || macAddress,
       name,
+      sensorType: sensorType || "lorawan",
+      macAddress: macAddress || "",
+      sensorModel: sensorModel || "",
+      province,
+      city,
       building,
       room,
       latitude,
